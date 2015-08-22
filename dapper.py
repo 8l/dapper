@@ -3,6 +3,16 @@
 import sys
 import ethereum.opcodes as opcodes
 import ethereum.abi as abi
+from ethereum import utils
+import struct
+
+
+def to_bytes(long_int):
+    bytes = []
+    while long_int != 0:
+        long_int, b = divmod(long_int, 256)
+        bytes.insert(0, b)
+    return bytes
 
 
 class Dapper:
@@ -18,8 +28,7 @@ for o in opcodes.opcodes:
 
     code = '''
 def {0}(*args):
-    # TODO ins length check on args?
-    bytes = ['{1}'] + ['%0.2x' % x for x in list(args)]
+    bytes = ['{1}'] + [format(x, '02x') for x in list(args)]
     dapper.stream += bytes
     '''.format(mnemonic, opcode)
     exec code in sys.modules[__name__].__dict__
@@ -51,9 +60,11 @@ class Contract(InstructionStream):
         self.translator = abi.ContractTranslator(_abi)
         # print(self.translator.function_data)
 
+
 class Function(InstructionStream):
     def __init__(self, func_abi):
         self.signature = func_abi['signature']
+
 
 def disasm(bytecode):
     op = None
@@ -73,8 +84,27 @@ def disasm(bytecode):
                 push_count = int(op[4:])
     yield('{0}_({1})'.format(op, data[:-2]))
 
+
 def signature():
     if hasattr(dapper.frame, 'signature'):
         return dapper.frame.signature
     else:
         raise Exception('No Function Signature found', dapper.frame)
+
+
+# Macros
+def push(word=None):
+    if word == 0 and word is not None:
+        result = [0]
+    else:
+        result = to_bytes(word)
+    instruction = 'push{0}_'.format(len(result))
+    try:
+        getattr(sys.modules[__name__], instruction)(*result)
+    except:
+        msg = "{0}({1}) instruction does not exist".format(instruction, result)
+        raise Exception(msg)
+
+
+def label(label):
+    return utils.decode_int(utils.sha3(label)[:4])
