@@ -55,6 +55,24 @@ class Function(InstructionStream):
     def __init__(self, func_abi):
         self.signature = func_abi['signature']
 
+def disasm(bytecode):
+    op = None
+    push_count = 0
+    data = ''
+    for i in xrange(0, len(bytecode), 2):
+        word = int(bytecode[i:i+2], 16)
+        if push_count > 0:
+            data += str(word) + ', '
+            push_count -= 1
+        elif word in opcodes.opcodes:
+            if op:
+                yield('{0}_({1})'.format(op, data[:-2]))
+            op = opcodes.opcodes[word][0].lower()
+            data = ''
+            if op.startswith('push'):
+                push_count = int(op[4:])
+    yield('{0}_({1})'.format(op, data[:-2]))
+
 def signature():
     if hasattr(dapper.frame, 'signature'):
         return dapper.frame.signature
