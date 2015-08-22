@@ -21,3 +21,7 @@ Returns int for [ABI Function Selector](https://github.com/ethereum/wiki/wiki/Et
 ## What else?
 
 Theres a disassembler as well, see [disasm.py](https://github.com/syng-io/dapper/blob/master/disasm.py) for a short demo
+
+## Requirements
+
+Dapper is heavily dependant on [pyethereum](https://github.com/ethereum/pyethereum)
